@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # 后端 API 服务
   backend:
     build:
       context: ./backend
@@ -11,20 +10,18 @@ services:
     environment:
       PORT: 3001
       NODE_ENV: production
-      JWT_SECRET: ${JWT_SECRET:-please_change_this_secret_in_production}
-      DB_PATH: /data/todo.db
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
+      JWT_SECRET: ${JWT_SECRET:?请在 .env 文件中设置 JWT_SECRET}
+      DB_PATH: /app/data/todo.db
     volumes:
-      - todo-data:/data      # SQLite 数据持久化
+      - todo-data:/app/data   # SQLite 数据持久化
     networks:
-      - app-network
+      - app-net
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3001/health"]
       interval: 30s
-      timeout: 10s
+      timeout: 5s
       retries: 3
 
-  # 前端 + Nginx
   frontend:
     build:
       context: ./frontend
@@ -32,17 +29,16 @@ services:
     container_name: todo-frontend
     restart: unless-stopped
     ports:
-      - "${PORT:-80}:80"
+      - "80:80"
     depends_on:
       backend:
         condition: service_healthy
     networks:
-      - app-network
+      - app-net
 
 volumes:
   todo-data:
-    driver: local
 
 networks:
-  app-network:
+  app-net:
     driver: bridge
